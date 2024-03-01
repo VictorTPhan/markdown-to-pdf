@@ -2,6 +2,7 @@ import os
 import time
 import click
 import markdown
+import shutil
 from markdown_include.include import MarkdownInclude
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -33,17 +34,33 @@ def _html(markdown_file_name, css_file_name):
 
 
 def _convert(markdown_file_name, css_file_name):
-    file_name = os.path.splitext(markdown_file_name)[0]
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(script_dir, "assets", "output")
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    file_name = os.path.splitext(os.path.basename(markdown_file_name))[0]
     html_string = _html(markdown_file_name, css_file_name)
 
-    with open(
-        file_name + ".html", "w", encoding="utf-8", errors="xmlcharrefreplace"
-    ) as output_file:
+    html_file_path = os.path.join(script_dir, file_name + ".html")
+    pdf_file_path = os.path.join(script_dir, file_name + ".pdf")
+
+    with open(html_file_path, "w", encoding="utf-8", errors="xmlcharrefreplace") as output_file:
         output_file.write(html_string)
 
     markdown_path = os.path.dirname(markdown_file_name)
     html = HTML(string=html_string, base_url=markdown_path)
-    html.write_pdf(file_name + ".pdf")
+    html.write_pdf(pdf_file_path)
+    click.echo(f"PDF saved to: {pdf_file_path}")
+
+    # Move files to the output directory
+    shutil.move(html_file_path, os.path.join(output_dir, file_name + ".html"))
+    shutil.move(pdf_file_path, os.path.join(output_dir, file_name + ".pdf"))
+
+    # Delete the HTML file if it still exists
+    if os.path.exists(os.path.join(output_dir, file_name + ".html")):
+        os.remove(os.path.join(output_dir, file_name + ".html"))
 
 
 class EventHandler(FileSystemEventHandler):
