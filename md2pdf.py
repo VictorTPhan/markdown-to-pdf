@@ -31,8 +31,28 @@ def _html(markdown_file_name, css_file_name):
               <body>{html}</body>
             </html>
             """
-
-
+        
+def create_output_file_name(file_name):
+    must_capitalize = [
+        "ai",
+        "ap",
+        "cs",
+        "usaco"
+    ]
+    
+    words = file_name.split("_")
+    output = ""
+    for i in range(len(words)):
+        new_word = ""
+        if words[i] in must_capitalize:
+            new_word = words[i].upper()
+        else:
+            output += words[i][0].upper() + words[i][1:]
+        output += new_word
+        if i < len(words)-1:
+            output += " "
+    return output
+    
 def _convert(markdown_file_name, css_file_name):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(script_dir, "assets", "output")
@@ -41,6 +61,7 @@ def _convert(markdown_file_name, css_file_name):
         os.makedirs(output_dir)
 
     file_name = os.path.splitext(os.path.basename(markdown_file_name))[0]
+    file_name = create_output_file_name(file_name)
     html_string = _html(markdown_file_name, css_file_name)
 
     html_file_path = os.path.join(script_dir, file_name + ".html")
